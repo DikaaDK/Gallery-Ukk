@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
 
 	Route::get('/preview', [GalleryController::class, 'preview'])->name('gallery.preview');
 	Route::post('/gallery/album', [GalleryController::class, 'storeAlbum'])->name('gallery.album.store');
+	Route::post('/gallery/album/{album}/update', [GalleryController::class, 'updateAlbum'])->name('gallery.album.update');
 	Route::post('/gallery/upload', [GalleryController::class, 'upload'])->name('gallery.upload');
 	Route::get('/gallery/detail/{photo}', [GalleryController::class, 'showPhoto'])->name('gallery.photo.show');
 	Route::post('/gallery/photo/{photo}/album', [GalleryController::class, 'updatePhotoAlbum'])->name('gallery.photo.album.update');

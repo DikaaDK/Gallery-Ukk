@@ -158,6 +158,7 @@ class GalleryController extends Controller
 
         $albums = DB::table('album as a')
             ->leftJoin('users', 'a.UserID', '=', 'users.UserID')
+            ->where('a.UserID', $userId)
             ->orderByDesc('a.TanggalDibuat')
             ->get([
                 'a.AlbumID',
@@ -200,6 +201,31 @@ class GalleryController extends Controller
         ], 'AlbumID');
 
         return redirect()->route('gallery.preview')->with('status', 'Album berhasil dibuat.');
+    }
+
+    public function updateAlbum(Request $request, $album)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+        ]);
+
+        $userId = (int) (Auth::id() ?? 0);
+        $albumId = (int) $album;
+
+        $updated = DB::table('album')
+            ->where('AlbumID', $albumId)
+            ->where('UserID', $userId)
+            ->update([
+                'NamaAlbum' => $validated['nama'],
+                'Deskripsi' => $validated['deskripsi'] ?? '',
+            ]);
+
+        if (!$updated && !DB::table('album')->where('AlbumID', $albumId)->where('UserID', $userId)->exists()) {
+            abort(403);
+        }
+
+        return redirect()->route('gallery.preview')->with('status', 'Album berhasil diperbarui.');
     }
 
     public function upload(Request $request)

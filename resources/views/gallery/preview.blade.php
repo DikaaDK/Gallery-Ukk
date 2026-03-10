@@ -147,6 +147,17 @@
                             <p class="text-lg font-semibold leading-tight text-[#111827]">{{ $album['name'] }}</p>
                             <p class="text-[0.85rem] text-[#4b5563]">{{ \Illuminate\Support\Str::limit($album['description'] ?? 'Tidak ada deskripsi.', 100) }}</p>
                             <p class="text-[0.55rem] text-[#1c1f2b]">{{ $album['created_at'] ?? '-' }}</p>
+                            <div class="mt-auto flex justify-end">
+                                <button
+                                    type="button"
+                                    class="edit-album-button rounded-lg border border-[#d1d5db] bg-white px-3 py-1.5 text-xs font-semibold text-[#111827]"
+                                    data-album-id="{{ $album['id'] }}"
+                                    data-album-name="{{ $album['name'] }}"
+                                    data-album-description="{{ $album['description'] ?? '' }}"
+                                >
+                                    Edit
+                                </button>
+                            </div>
                         </article>
                     @empty
                         <div class="col-span-full rounded-[26px] border border-dashed border-[#ececf0] bg-white/80 p-8 text-center text-sm text-[#777d96]">Belum ada album untuk ditampilkan.</div>
@@ -205,6 +216,27 @@
                     <textarea name="deskripsi" rows="3" class="mt-1 w-full rounded-2xl border border-[#e5e7eb] px-4 py-3 text-sm" placeholder="Tulis catatan untuk album ini"></textarea>
                 </label>
                 <button type="submit" class="rounded-2xl border border-transparent bg-[#1f2937] py-3 text-sm font-semibold text-white">Buat album</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="edit-album-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div id="edit-album-modal-backdrop" class="absolute inset-0 bg-black/60"></div>
+        <div class="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-[0_25px_60px_rgba(15,23,42,0.25)]">
+            <button id="edit-album-modal-close" class="absolute right-4 top-4 text-xl font-semibold text-[#777d96]">&times;</button>
+            <h2 class="text-lg font-semibold">Edit album</h2>
+            <p class="mt-1 text-sm text-[#6b7280]">Perbarui informasi album Anda.</p>
+            <form id="edit-album-form" action="" method="POST" class="mt-5 flex flex-col gap-4">
+                @csrf
+                <label class="text-sm font-medium text-[#111827]">
+                    Nama Album
+                    <input id="edit-album-name" name="nama" type="text" class="mt-1 w-full rounded-2xl border border-[#e5e7eb] px-4 py-3 text-sm" required>
+                </label>
+                <label class="text-sm font-medium text-[#111827]">
+                    Deskripsi Album
+                    <textarea id="edit-album-description" name="deskripsi" rows="3" class="mt-1 w-full rounded-2xl border border-[#e5e7eb] px-4 py-3 text-sm" placeholder="Tulis catatan untuk album ini"></textarea>
+                </label>
+                <button type="submit" class="rounded-2xl border border-transparent bg-[#1f2937] py-3 text-sm font-semibold text-white">Simpan Perubahan</button>
             </form>
         </div>
     </div>
@@ -284,6 +316,14 @@
             const albumBackdrop = document.getElementById('album-modal-backdrop');
             const albumOpenButton = document.getElementById('add-album-button');
             const albumCloseButton = document.getElementById('album-modal-close');
+            const editAlbumModal = document.getElementById('edit-album-modal');
+            const editAlbumBackdrop = document.getElementById('edit-album-modal-backdrop');
+            const editAlbumCloseButton = document.getElementById('edit-album-modal-close');
+            const editAlbumForm = document.getElementById('edit-album-form');
+            const editAlbumNameInput = document.getElementById('edit-album-name');
+            const editAlbumDescriptionInput = document.getElementById('edit-album-description');
+            const editAlbumButtons = document.querySelectorAll('.edit-album-button');
+            const albumUpdateBase = "{{ url('/gallery/album') }}";
             const profileMenuButton = document.getElementById('profile-menu-button');
             const profileMenu = document.getElementById('profile-menu');
 
@@ -325,6 +365,8 @@
 
             const showAlbumModal = () => albumModal?.classList.remove('hidden');
             const hideAlbumModal = () => albumModal?.classList.add('hidden');
+            const showEditAlbumModal = () => editAlbumModal?.classList.remove('hidden');
+            const hideEditAlbumModal = () => editAlbumModal?.classList.add('hidden');
 
             albumOpenButton?.addEventListener('click', showAlbumModal);
             albumCloseButton?.addEventListener('click', hideAlbumModal);
@@ -332,6 +374,30 @@
                 if (event.target === albumModal || event.target === albumBackdrop) {
                     hideAlbumModal();
                 }
+            });
+
+            editAlbumCloseButton?.addEventListener('click', hideEditAlbumModal);
+            editAlbumModal?.addEventListener('click', (event) => {
+                if (event.target === editAlbumModal || event.target === editAlbumBackdrop) {
+                    hideEditAlbumModal();
+                }
+            });
+
+            editAlbumButtons.forEach((button) => {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const albumId = button.dataset.albumId;
+                    if (!albumId || !editAlbumForm || !editAlbumNameInput || !editAlbumDescriptionInput) {
+                        return;
+                    }
+
+                    editAlbumForm.action = `${albumUpdateBase}/${albumId}/update`;
+                    editAlbumNameInput.value = button.dataset.albumName || '';
+                    editAlbumDescriptionInput.value = button.dataset.albumDescription || '';
+                    showEditAlbumModal();
+                });
             });
 
             const handleAddAction = () => {
